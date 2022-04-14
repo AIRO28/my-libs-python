@@ -1,0 +1,32 @@
+version: 1
+formatters:
+  formatter1:
+    format: '[%(asctime)s][%(name)s][%(processName)s %(funcName)s][%(levelname)s] %(message)s'
+  formatter2:
+    format: '[%(asctime)s][%(name)s][%(processName)s]: %(message)s'
+handlers:
+  streamhandler:
+    class: logging.StreamHandler
+    level: INFO
+    formatter: formatter1
+    stream: ext://sys.stdout
+  filehandler:
+    class: logging.FileHandler
+    level: DEBUG
+    formatter: formatter2
+    filename: ./log/main.log
+    encoding: "utf-8"
+loggers:
+  main:
+    level: INFO
+    handlers: [streamhandler, filehandler]
+    propagate: no
+    qualname: main
+  filer:
+    level: DEBUG
+    handlers: [filehandler]
+    propagate: no
+    qualname: filer
+root:
+  level: DEBUG
+disable_existing_loggers: False 
