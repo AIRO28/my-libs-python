@@ -1,0 +1,5 @@
+output/
+input/*.mp4
+input/*.MP4
+input/*.mov
+input/*.MOV
