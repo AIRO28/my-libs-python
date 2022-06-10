@@ -6,10 +6,12 @@ import sys
 import shutil
 import time
 from typing import List, Tuple
+from multiprocessing import Pool
+from multiprocessing.pool import AsyncResult
 
 from natsort.natsort import natsorted, List_ns
 
-class Video2Image():
+class Video2Image(object):
     TARGET_EXTENSION = ("mp4", "MP4", "mov", "MOV")
     
     def __init__(self, output_fps) -> None:
@@ -69,10 +71,25 @@ class Video2Image():
             i += 1
         
         end_time = time.perf_counter() - start_time
-        print(f"The conversion of ({filename}) is now complete. Convert time:{end_time:.2f}[sec]")
+        print(f"The conversion of ({filename}) is now complete. Convert time: {end_time:.2f}[sec]")
         cap.release()
         
         return True
+    
+    def convert_multiproc(self, file_path:str, output_path:str) -> None:
+        """フレーム変換処理(マルチプロセス用)
+
+        Args:
+            file_path (str): 変換対象ファイルパス
+            output_path (str): 変換対象の出力先ディレクトリパス
+        """
+        
+        # 変換対象の出力先ディレクトリを生成
+        converted_path = self.generate_per_filename_dir(str(file_path), output_path)
+        # フレーム変換実行
+        self.convert_frame(str(file_path), converted_path, "jpg")
+        
+        return
 
     @staticmethod
     def get_target_info(cap) -> Tuple[float, float, float,float]:
@@ -148,6 +165,7 @@ class Video2Image():
             os.mkdir(output_path)
         
         return output_path
+    
 
 def main(output_fps:int=-1):
     """メイン処理
@@ -164,12 +182,30 @@ def main(output_fps:int=-1):
     # 出力先ディレクトリを生成
     output_path = v2i.generate_output_dir()
     
+    start_proc_time = time.perf_counter()
+    
+    # フレーム変換を並列処理で実行する
+    # cpu_cnt = os.cpu_count()
+    # with Pool(processes=cpu_cnt) as pool:
+    #     proc_results:List[AsyncResult] = []
+    #     for file_path in file_paths:
+    #         # 変換処理に渡す引数
+    #         args = [file_path, output_path]
+    #         # フレーム変換処理を並列実行
+    #         proc_results.append(pool.apply_async(v2i.convert_multiproc, args=args))
+    #     # 終了待機
+    #     for proc_result in proc_results:
+    #         proc_result.get()
+    
     for file_path in file_paths:
         # 変換対象の出力先ディレクトリを生成
         converted_path = v2i.generate_per_filename_dir(str(file_path), output_path)
         # フレーム変換実行
         v2i.convert_frame(str(file_path), converted_path, "jpg")
-        
+    
+    total_proc_time = time.perf_counter() - start_proc_time
+    print(f"Total processing time: {total_proc_time:.2f}[sec]")
+    
     return
 
 if __name__ == "__main__":
